@@ -1,0 +1,58 @@
+2025-05-26 16:15:46 [INFO] dynavox - Log level set to INFO
+2025-05-26 16:15:46 [INFO] dynavox.simulation - Simulation engine initialized with model: gpt-4o-mini
+2025-05-26 16:15:46 [INFO] dynavox - Starting OpinionDynamics Simulation
+2025-05-26 16:15:46 [INFO] dynavox - Model: gpt-4o-mini
+2025-05-26 16:15:46 [INFO] dynavox - Agents: 5, Rounds: 3
+2025-05-26 16:15:46 [INFO] dynavox - Topics: climate_change, wealth_inequality, ai_regulation
+2025-05-26 16:15:46 [INFO] dynavox - Output directory: results/2025-05-26_16-15-46_test
+2025-05-26 16:15:46 [INFO] dynavox - Creating agent population...
+2025-05-26 16:15:46 [INFO] dynavox.simulation - Initializing population of 5 agents with topics: ['climate_change', 'wealth_inequality', 'ai_regulation']
+2025-05-26 16:16:06 [INFO] dynavox.agents - Successfully generated agent: Emma Russo
+2025-05-26 16:16:06 [INFO] dynavox.simulation - Created agent f8804667-d307-44be-b6fb-577c3a8984a8: Emma Russo (26, Sales Representative)
+2025-05-26 16:16:29 [INFO] dynavox.agents - Successfully generated agent: Finn Bianchi
+2025-05-26 16:16:29 [INFO] dynavox.simulation - Created agent 79deebb9-d945-4bb4-982c-45ba1d7d12e5: Finn Bianchi (37, Graphic Designer)
+2025-05-26 16:16:51 [INFO] dynavox.agents - Successfully generated agent: Sebastian Sanchez
+2025-05-26 16:16:51 [INFO] dynavox.simulation - Created agent 99a80cf6-fe49-4abd-856e-268fcce13ab3: Sebastian Sanchez (35, Professional)
+2025-05-26 16:17:18 [INFO] dynavox.agents - Successfully generated agent: Aiden Martin
+2025-05-26 16:17:18 [INFO] dynavox.simulation - Created agent 26bc4da6-9d64-42fb-82cb-ef3ef86ab2f5: Aiden Martin (35, Professional)
+2025-05-26 16:17:43 [INFO] dynavox.agents - Successfully generated agent: Ingrid Petrov
+2025-05-26 16:17:43 [INFO] dynavox.simulation - Created agent 335ee6ec-2676-475d-9858-818b683c3a27: Ingrid Petrov (78, Administrative Assistant)
+2025-05-26 16:17:43 [INFO] dynavox - Running simulation...
+2025-05-26 16:17:43 [INFO] dynavox.simulation - Starting simulation with 5 agents for 3 rounds
+2025-05-26 16:17:43 [INFO] dynavox.simulation - Starting interaction round 1
+2025-05-26 16:17:43 [INFO] dynavox.simulation - Executing 1 conversations sequentially
+2025-05-26 16:17:43 [INFO] dynavox.interactions - Starting conversation between Aiden Martin and Emma Russo
+2025-05-26 16:18:26 [INFO] dynavox.simulation - Conversation completed between 26bc4da6-9d64-42fb-82cb-ef3ef86ab2f5 and f8804667-d307-44be-b6fb-577c3a8984a8
+2025-05-26 16:18:26 [INFO] dynavox.simulation - Starting interaction round 2
+2025-05-26 16:18:26 [INFO] dynavox.simulation - Executing 1 conversations sequentially
+2025-05-26 16:18:26 [INFO] dynavox.interactions - Starting conversation between Emma Russo and Ingrid Petrov
+2025-05-26 16:19:10 [INFO] dynavox.simulation - Conversation completed between f8804667-d307-44be-b6fb-577c3a8984a8 and 335ee6ec-2676-475d-9858-818b683c3a27
+2025-05-26 16:19:10 [INFO] dynavox.simulation - Starting interaction round 3
+2025-05-26 16:19:10 [INFO] dynavox - Exporting results...
+2025-05-26 16:19:10 [INFO] dynavox - Generating visualizations...
+2025-05-26 16:39:00 [INFO] dynavox - Log level set to INFO
+2025-05-26 16:39:00 [INFO] dynavox.simulation - Simulation engine initialized with model: gpt-4o-mini
+2025-05-26 16:39:00 [INFO] dynavox - Logging initialized for simulation: diverse_agents
+2025-05-26 16:39:00 [INFO] dynavox - Mock mode: False
+2025-05-26 16:39:00 [INFO] dynavox - Log file: results/2025-05-26_16-39-00_diverse_agents/logs/2025-05-26_16-39-00_diverse_agents.log
+2025-05-26 16:39:00 [INFO] dynavox - Starting OpinionDynamics Simulation
+2025-05-26 16:39:00 [INFO] dynavox - Model: gpt-4o-mini
+2025-05-26 16:39:00 [INFO] dynavox - Agents: 20, Rounds: 15
+2025-05-26 16:39:00 [INFO] dynavox - Topics: wealth_inequality, climate_change, ai_regulation, universal_healthcare, remote_work
+2025-05-26 16:39:00 [INFO] dynavox - Output directory: results/2025-05-26_16-39-00_diverse_agents
+2025-05-26 16:39:00 [INFO] dynavox - Creating agent population...
+2025-05-26 16:39:00 [INFO] dynavox.simulation - Initializing population of 20 agents with topics: ['wealth_inequality', 'climate_change', 'ai_regulation', 'universal_healthcare', 'remote_work']
+2025-05-26 16:45:54 [INFO] dynavox - Log level set to INFO
+2025-05-26 16:45:54 [INFO] dynavox.simulation - Simulation engine initialized with model: gpt-4o-mini
+2025-05-26 16:45:54 [INFO] dynavox - Logging initialized for simulation: diverse_agents
+2025-05-26 16:45:54 [INFO] dynavox - Mock mode: False
+2025-05-26 16:45:54 [INFO] dynavox - Log file: results/2025-05-26_16-45-54_diverse_agents/logs/2025-05-26_16-45-54_diverse_agents.log
+2025-05-26 16:45:54 [INFO] dynavox - Starting OpinionDynamics Simulation
+2025-05-26 16:45:54 [INFO] dynavox - Model: gpt-4o-mini
+2025-05-26 16:45:54 [INFO] dynavox - Agents: 20, Rounds: 15
+2025-05-26 16:45:54 [INFO] dynavox - Topics: wealth_inequality, climate_change, ai_regulation, universal_healthcare, remote_work
+2025-05-26 16:45:54 [INFO] dynavox - Output directory: results/2025-05-26_16-45-54_diverse_agents
+2025-05-26 16:45:54 [INFO] dynavox - Creating agent population...
+2025-05-26 16:45:54 [INFO] dynavox.simulation - Initializing population of 20 agents with topics: ['wealth_inequality', 'climate_change', 'ai_regulation', 'universal_healthcare', 'remote_work']
+2025-05-26 16:46:24 [INFO] dynavox.agents - Successfully generated agent: Isabella Young
+2025-05-26 16:46:24 [INFO] dynavox.simulation - Created agent 2f1b2369-6976-4e5e-8f95-c36b63a3a4fe: Isabella Young (24, Warehouse Worker)

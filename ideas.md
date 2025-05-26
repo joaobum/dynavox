@@ -1,0 +1,1 @@
+- Use the nested scales from the domains in https://hexaco.org/scaledescriptions
