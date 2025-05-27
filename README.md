@@ -559,6 +559,24 @@ certainty_threshold = 80       # High certainty resists change
 emotional_contagion = 0.3      # How much emotions spread
 ```
 
+## Documentation
+
+📚 **[View Complete Documentation](docs/index.md)**
+
+The documentation includes:
+- Detailed module documentation with architecture diagrams
+- API references and usage examples
+- Configuration options and parameters
+- Design specifications and implementation details
+
+Quick links to key documentation:
+- **[Agents Module](docs/agents.md)** - Agent generation, personality system, and profiles
+- **[Interactions Module](docs/interactions.md)** - Conversation orchestration and state updates
+- **[LLM Module](docs/llm.md)** - Language model integration and providers
+- **[Simulation Module](docs/simulation.md)** - Core simulation engine and analysis
+- **[Analysis Module](docs/analysis.md)** - Visualization and reporting tools
+- **[Configuration](docs/config.md)** - All configurable parameters
+
 ## API Reference
 
 ### QuickSimulation

@@ -9,6 +9,7 @@ from ..llm.client import LLMClient
 from ..llm.prompts import PromptTemplates
 from .planner import InteractionPlanner, InteractionPlan
 from .updater import StateUpdater, ConversationAnalysis, StateChange
+from .updater_enhanced import EnhancedStateUpdater
 
 logger = logging.getLogger('dynavox.interactions')
 
@@ -28,13 +29,17 @@ class Conversation:
 class ConversationOrchestrator:
     """Manages agent conversations from planning through execution to updates."""
     
-    def __init__(self, llm_client: LLMClient, max_turns: int = 20):
+    def __init__(self, llm_client: LLMClient, max_turns: int = 20, use_enhanced_updater: bool = True):
         self.llm = llm_client
         self.ontology = PersonalityBehaviorOntology()
         logger.debug(f"Initialized ConversationOrchestrator with max_turns={max_turns}")
         self.prompts = PromptTemplates()
         self.planner = InteractionPlanner()
-        self.updater = StateUpdater(llm_client)
+        if use_enhanced_updater:
+            self.updater = EnhancedStateUpdater(llm_client)
+            logger.info("Using EnhancedStateUpdater for more dynamic opinion evolution")
+        else:
+            self.updater = StateUpdater(llm_client)
         self.max_turns = max_turns
     
     def conduct_conversation(self, agent1: Agent, agent2: Agent, 

@@ -6,7 +6,6 @@ from ..agents.profile import Agent
 from ..llm.async_client import AsyncLLMWrapper
 from .orchestrator import ConversationOrchestrator, Conversation
 from .planner import InteractionPlanner, InteractionPlan
-from .updater import StateUpdater
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +30,10 @@ class AsyncConversationOrchestrator:
             self.owns_wrapper = True
         
         # Reuse components from sync orchestrator
-        self.sync_orchestrator = ConversationOrchestrator(llm_client, max_turns)
+        self.sync_orchestrator = ConversationOrchestrator(llm_client, max_turns, use_enhanced_updater=True)
         self.planner = InteractionPlanner()
-        self.updater = StateUpdater(llm_client)
+        # Use the same updater as sync orchestrator
+        self.updater = self.sync_orchestrator.updater
         self.max_turns = max_turns
     
     async def conduct_conversations_parallel(self, 
