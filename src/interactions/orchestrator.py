@@ -40,7 +40,7 @@ class ConversationOrchestrator:
     def conduct_conversation(self, agent1: Agent, agent2: Agent, 
                            context: Optional[Dict] = None) -> Conversation:
         """Execute a complete conversation between two agents."""
-        logger.info(f"Starting conversation between {agent1.name} and {agent2.name}")
+        logger.debug(f"Starting conversation between {agent1.name} and {agent2.name}")
         
         # Plan the interaction
         logger.debug("Planning interaction")
@@ -425,7 +425,7 @@ Your turn to speak as {agent.name}:"""
     def _print_conversation_summary(self, agent1: Agent, agent2: Agent, 
                                   conversation: Conversation) -> None:
         """Print conversation summary and state changes."""
-        print(f"\n  === Conversation Summary: {agent1.name} & {agent2.name} ===")
+        logger.info(f"💬 === Conversation Summary: {agent1.name} & {agent2.name} ===")
         
         # Generate brief conversation summary (50 words)
         if len(conversation.transcript) > 0:
@@ -438,22 +438,22 @@ Your turn to speak as {agent.name}:"""
             summary_parts.append(f"Discussed {', '.join(topics_discussed)}")
             
             if quality > 0.7:
-                summary_parts.append("with good rapport")
+                summary_parts.append("with good rapport 😊")
             elif quality < 0.3:
-                summary_parts.append("with some tension")
+                summary_parts.append("with some tension 😟")
             
             if conversation.analysis.resolution_achieved:
-                summary_parts.append("and reached mutual understanding")
+                summary_parts.append("and reached mutual understanding 🤝")
             
             summary = ". ".join(summary_parts) + f" ({conversation.duration_turns} turns)"
-            print(f"  Summary: {summary}")
+            logger.info(f"  📝 Summary: {summary}")
         
         # Print opinion changes for each agent
-        print(f"\n  Opinion Changes:")
+        logger.info(f"  🔄 Opinion Changes:")
         for agent, agent_name in [(agent1, agent1.name), (agent2, agent2.name)]:
             changes = conversation.state_changes.get(agent.id, None)
             if changes and changes.opinion_changes:
-                print(f"    {agent_name}:")
+                logger.info(f"    {agent_name}:")
                 for topic, deltas in changes.opinion_changes.items():
                     position_change = deltas.get('position', 0)
                     certainty_change = deltas.get('certainty', 0)
@@ -462,27 +462,41 @@ Your turn to speak as {agent.name}:"""
                     # Only print if there were meaningful changes
                     if abs(position_change) > 0.1 or abs(certainty_change) > 0.1:
                         topic_display = topic.replace('_', ' ').title()
-                        print(f"      {topic_display}:")
+                        logger.info(f"      {topic_display}:")
                         if abs(position_change) > 0.1:
-                            print(f"        Position: {position_change:+.1f}")
+                            direction = "➡️" if position_change > 0 else "⬅️"
+                            logger.info(f"        {direction} Position: {position_change:+.1f}")
                         if abs(certainty_change) > 0.1:
-                            print(f"        Certainty: {certainty_change:+.1f}")
+                            certainty_icon = "🔼" if certainty_change > 0 else "🔽"
+                            logger.info(f"        {certainty_icon} Certainty: {certainty_change:+.1f}")
                         if abs(importance_change) > 0.1:
-                            print(f"        Importance: {importance_change:+.1f}")
+                            importance_icon = "⭐" if importance_change > 0 else "💫"
+                            logger.info(f"        {importance_icon} Importance: {importance_change:+.1f}")
             else:
-                print(f"    {agent_name}: No significant opinion changes")
+                logger.info(f"    {agent_name}: No significant opinion changes 🔒")
         
         # Print emotional changes for each agent
-        print(f"\n  Emotional Changes:")
+        logger.info(f"  😊 Emotional Changes:")
         for agent, agent_name in [(agent1, agent1.name), (agent2, agent2.name)]:
             changes = conversation.state_changes.get(agent.id, None)
             if changes and changes.emotion_changes:
-                print(f"    {agent_name}:")
+                logger.info(f"    {agent_name}:")
                 for emotion, delta in changes.emotion_changes.items():
                     if abs(delta) > 0.1:  # Only show meaningful changes
                         emotion_display = emotion.replace('_', ' ').title()
-                        print(f"      {emotion_display}: {delta:+.1f}")
+                        # Add emoji based on emotion type and direction
+                        if emotion == 'valence':
+                            emoji = "😊" if delta > 0 else "😔"
+                        elif emotion == 'arousal':
+                            emoji = "⚡" if delta > 0 else "😴"
+                        elif emotion == 'anxiety':
+                            emoji = "😰" if delta > 0 else "😌"
+                        elif emotion == 'confidence':
+                            emoji = "💪" if delta > 0 else "😟"
+                        elif emotion == 'social_energy':
+                            emoji = "🔋" if delta > 0 else "🪫"
+                        else:
+                            emoji = "🧠" if delta > 0 else "🤯"
+                        logger.info(f"      {emoji} {emotion_display}: {delta:+.1f}")
             else:
-                print(f"    {agent_name}: No significant emotional changes")
-        
-        print()  # Extra line for readability
+                logger.info(f"    {agent_name}: No significant emotional changes 😐")

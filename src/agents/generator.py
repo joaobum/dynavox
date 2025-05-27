@@ -70,7 +70,7 @@ class AgentGenerator:
         
         # Use the name from background
         name = background.name if background.name else f"Agent_{id(background) % 10000}"
-        logger.info(f"Successfully generated agent: {name}")
+        logger.debug(f"Successfully generated agent: {name}")
         
         return Agent(
             name=name,

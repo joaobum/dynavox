@@ -1,0 +1,11 @@
+2025-05-26 20:22:52 [INFO    ] dynavox                   | 🚀 === DynaVox Simulation Starting ===
+2025-05-26 20:22:52 [INFO    ] dynavox                   | ⚙️ Configuration:
+2025-05-26 20:22:52 [INFO    ] dynavox                   |   📁 Output Directory: test_logging/2025-05-26_20-22_mock_3_1_50_50
+2025-05-26 20:22:52 [INFO    ] dynavox                   |   🤖 Model: mock (Mock)
+2025-05-26 20:22:52 [INFO    ] dynavox                   |   👥 Agents: 3
+2025-05-26 20:22:52 [INFO    ] dynavox                   |   🔁 Rounds: 1
+2025-05-26 20:22:52 [INFO    ] dynavox                   |   🤝 Interaction Probability: 50.00%
+2025-05-26 20:22:52 [INFO    ] dynavox                   |   🧲 Homophily Bias: 50.00%
+2025-05-26 20:22:52 [INFO    ] dynavox                   |   📝 Log Level: INFO
+2025-05-26 20:22:52 [INFO    ] dynavox                   |   📄 Log File: test_logging/2025-05-26_20-22_mock_3_1_50_50/logs/2025-05-26_20-22_mock_3_1_50_50.log
+2025-05-26 20:22:52 [INFO    ] dynavox                   | Test message - should appear only once

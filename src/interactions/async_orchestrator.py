@@ -1,12 +1,14 @@
 """Async conversation orchestration for parallel interactions."""
 import asyncio
-from typing import Dict, List, Optional, Any, Tuple
-from datetime import datetime
+import logging
+from typing import Dict, List, Optional, Tuple
 from ..agents.profile import Agent
-from ..llm.async_client import AsyncLLMClient, AsyncLLMWrapper
+from ..llm.async_client import AsyncLLMWrapper
 from .orchestrator import ConversationOrchestrator, Conversation
-from .planner import InteractionPlanner
+from .planner import InteractionPlanner, InteractionPlan
 from .updater import StateUpdater
+
+logger = logging.getLogger(__name__)
 
 
 class AsyncConversationOrchestrator:
@@ -46,27 +48,82 @@ class AsyncConversationOrchestrator:
         Returns:
             List of completed conversations
         """
-        print(f"\n  Conducting {len(interaction_pairs)} conversations in parallel...")
+        logger.info(f"🚀 Starting {len(interaction_pairs)} conversations in parallel...")
         
-        # Create tasks for each conversation
+        # Create conversation status tracking
+        conversation_status = {i: "Starting" for i in range(len(interaction_pairs))}
+        
+        # Create tasks for each conversation with tracking
         tasks = []
-        for agent1, agent2 in interaction_pairs:
-            task = self._conduct_single_conversation(agent1, agent2, context)
+        for i, (agent1, agent2) in enumerate(interaction_pairs):
+            task = self._conduct_single_conversation_with_tracking(
+                i, agent1, agent2, conversation_status, context)
             tasks.append(task)
+        
+        # Print initial status
+        logger.info("  ⚡ All conversations starting simultaneously:")
+        for i, (agent1, agent2) in enumerate(interaction_pairs):
+            logger.info(f"    [{i+1}] {agent1.name} ↔ {agent2.name}: Starting...")
         
         # Execute all conversations in parallel
         conversations = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Print completion status
+        logger.info("✅ All conversations completed in parallel!")
         
         # Filter out any failed conversations
         valid_conversations = []
         for i, conv in enumerate(conversations):
             if isinstance(conv, Exception):
                 agent1, agent2 = interaction_pairs[i]
-                print(f"  Conversation failed between {agent1.name} and {agent2.name}: {conv}")
+                logger.error(f"  ❌ Conversation failed between {agent1.name} and {agent2.name}: {conv}")
             else:
                 valid_conversations.append(conv)
         
         return valid_conversations
+    
+    async def _conduct_single_conversation_with_tracking(self, conv_id: int, 
+                                                        agent1: Agent, agent2: Agent,
+                                                        status_dict: Dict[int, str],
+                                                        context: Optional[Dict] = None) -> Conversation:
+        """Execute a single conversation with status tracking."""
+        status_dict[conv_id] = "Planning"
+        
+        # Plan the interaction (synchronous, fast)
+        plan = self.planner.plan_interaction(agent1, agent2, context)
+        
+        status_dict[conv_id] = "Conversing"
+        
+        # Execute the conversation asynchronously
+        transcript = await self._execute_conversation_async(agent1, agent2, plan)
+        
+        status_dict[conv_id] = "Analyzing"
+        
+        # Analyze results (can be async in future)
+        analysis = self.updater.analyze_conversation(transcript, agent1, agent2, plan)
+        
+        # Calculate state changes
+        state_changes = self.sync_orchestrator._calculate_state_changes(agent1, agent2, analysis)
+        
+        # Apply updates to agents
+        self.sync_orchestrator._apply_updates(agent1, agent2, state_changes)
+        
+        # Create conversation object
+        conversation = Conversation(
+            participants=[agent1.id, agent2.id],
+            plan=plan,
+            transcript=transcript,
+            analysis=analysis,
+            state_changes=state_changes,
+            duration_turns=len(transcript)
+        )
+        
+        status_dict[conv_id] = "Complete"
+        
+        # Don't print summary here - it would break parallel display
+        # Summary will be printed after all conversations complete
+        
+        return conversation
     
     async def _conduct_single_conversation(self, agent1: Agent, agent2: Agent,
                                          context: Optional[Dict] = None) -> Conversation:
@@ -217,7 +274,7 @@ Your turn to speak as {agent.name}:"""
             return response
             
         except Exception as e:
-            print(f"Warning: Async message generation failed: {e}")
+            logger.warning(f"Async message generation failed: {e}")
             return self.sync_orchestrator._generate_fallback_message(agent, plan)
     
     def cleanup(self):

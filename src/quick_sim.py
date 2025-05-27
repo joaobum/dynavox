@@ -2,7 +2,6 @@
 import os
 import sys
 import logging
-import logging.config
 from typing import Optional, List, Dict
 from dotenv import load_dotenv
 
@@ -13,21 +12,20 @@ if __name__ == "__main__":
 from src.llm import create_llm_client
 from src.simulation import SimulationEngine
 from src.analysis import SimulationVisualizer, SimulationReporter
-from src.config import STANDARD_TOPICS, LOGGING_CONFIG
-from src.utils.logging_config import setup_simulation_logging, get_simulation_output_dir
+from src.config import STANDARD_TOPICS
+from src.utils.enhanced_logging import setup_enhanced_logging, RealTimeDataWriter
 
 # Load environment variables
 load_dotenv()
 
-# Initialize logging
-logging.config.dictConfig(LOGGING_CONFIG)
+# Logging will be initialized by setup_enhanced_logging
 logger = logging.getLogger('dynavox')
 
 
 class QuickSimulation:
     """Simplified interface for running OpinionDynamics simulations."""
     
-    def __init__(self, model: Optional[str] = None, use_mock: bool = False, log_level: str = 'INFO'):
+    def __init__(self, model: Optional[str] = None, use_mock: bool = False, log_level: str = 'INFO', use_async: bool = False):
         """Initialize simulation with automatic configuration.
         
         Args:
@@ -35,9 +33,11 @@ class QuickSimulation:
                   If None, uses DEFAULT_MODEL from .env
             use_mock: Use mock LLM for testing (overrides model)
             log_level: Logging level ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
+            use_async: Use async execution for parallel conversations
         """
         self.log_level = log_level
         self.use_mock = use_mock
+        self.use_async = use_async
         # Set log level
         numeric_level = getattr(logging, log_level.upper())
         for logger_name in ['dynavox', 'dynavox.simulation', 
@@ -49,13 +49,12 @@ class QuickSimulation:
         if use_mock:
             os.environ['USE_MOCK_LLM'] = 'true'
             logger.info("Using Mock LLM for testing")
-            print("Using Mock LLM for testing")
         
         # Create LLM client with automatic configuration
         self.llm_client = create_llm_client(model)
         
-        # Initialize simulation engine
-        self.sim = SimulationEngine(self.llm_client)
+        # Initialize simulation engine with async support
+        self.sim = SimulationEngine(self.llm_client, use_async=use_async)
         
         # Initialize analysis tools
         self.visualizer = None
@@ -84,30 +83,38 @@ class QuickSimulation:
         if topics is None:
             topics = ['climate_change', 'wealth_inequality', 'ai_regulation']
         
-        # Create timestamped output directory with mock suffix if needed
-        sim_output_dir = get_simulation_output_dir(output_dir, simulation_name, self.use_mock)
+        # Extract simulation parameters
+        interaction_prob = kwargs.get('interaction_probability', 0.15)
+        homophily_bias = kwargs.get('homophily_bias', 0.6)
+        model_name = getattr(self.llm_client, 'model', 'Unknown')
         
-        # Set up simulation-specific logging
-        log_path = setup_simulation_logging(sim_output_dir, simulation_name, 
-                                          self.use_mock, log_level=self.log_level)
+        # Set up enhanced logging and output directory
+        sim_output_dir, log_path = setup_enhanced_logging(
+            output_dir=output_dir,
+            model_name=model_name,
+            num_agents=num_agents,
+            num_rounds=num_rounds,
+            interaction_prob=interaction_prob,
+            homophily=homophily_bias,
+            is_mock=self.use_mock,
+            log_level=self.log_level
+        )
         
-        logger.info(f"Starting OpinionDynamics Simulation")
+        # Initialize real-time data writer
+        self.data_writer = RealTimeDataWriter(os.path.join(sim_output_dir, 'data'))
+        
+        # Attach data writer to simulation engine
+        self.sim.data_writer = self.data_writer
+        
+        logger.info("=== Starting OpinionDynamics Simulation ===")
         logger.info(f"Model: {getattr(self.llm_client, 'model', 'Unknown')}")
-        logger.info(f"Agents: {num_agents}, Rounds: {num_rounds}")
+        logger.info(f"Agents: {num_agents}")
+        logger.info(f"Rounds: {num_rounds}")
         logger.info(f"Topics: {', '.join(topics)}")
-        logger.info(f"Output directory: {sim_output_dir}")
-        
-        print(f"\n=== Starting OpinionDynamics Simulation ===")
-        print(f"Model: {getattr(self.llm_client, 'model', 'Unknown')}")
-        print(f"Agents: {num_agents}")
-        print(f"Rounds: {num_rounds}")
-        print(f"Topics: {', '.join(topics)}")
-        print(f"Output: {sim_output_dir}")
-        print()
+        logger.info(f"Output: {sim_output_dir}")
         
         # Initialize population
         logger.info("Creating agent population...")
-        print("Creating agent population...")
         self.sim.initialize_population(
             size=num_agents,
             topics=topics
@@ -115,7 +122,6 @@ class QuickSimulation:
         
         # Run simulation
         logger.info("Running simulation...")
-        print("\nRunning simulation...")
         self.sim.run_simulation(
             rounds=num_rounds,
             interaction_probability=kwargs.get('interaction_probability', 0.15),
@@ -125,19 +131,17 @@ class QuickSimulation:
         
         # Export raw results to data subdirectory
         logger.info("Exporting results...")
-        print("\nExporting results...")
         self.sim.export_results(sim_output_dir)
         
         # Generate visualizations
         logger.info("Generating visualizations...")
-        print("\nGenerating visualizations...")
         viz_dir = os.path.join(sim_output_dir, "visualizations")
         self.visualizer = SimulationVisualizer(self.sim, viz_dir)
         self.visualizer.create_all_visualizations()
         self.visualizer.create_summary_dashboard()
         
         # Generate reports
-        print("\nGenerating reports...")
+        logger.info("Generating reports...")
         report_dir = os.path.join(sim_output_dir, "reports")
         self.reporter = SimulationReporter(self.sim, report_dir)
         report_path = self.reporter.generate_full_report()
@@ -151,8 +155,8 @@ class QuickSimulation:
             if os.path.exists(self.sim._checkpoint_dir):
                 shutil.move(self.sim._checkpoint_dir, checkpoint_dir)
         
-        print(f"\n=== Simulation Complete ===")
-        print(f"All outputs saved to: {sim_output_dir}/")
+        logger.info("=== Simulation Complete ===")
+        logger.info(f"All outputs saved to: {sim_output_dir}/")
         
         # Return paths to key outputs
         return {
@@ -192,7 +196,7 @@ class QuickSimulation:
             raise ValueError(f"Unknown preset: {preset}. Choose from: {list(presets.keys())}")
         
         config = presets[preset]
-        print(f"Running '{preset}' simulation preset...")
+        logger.info(f"Running '{preset}' simulation preset...")
         
         return self.run(**config)
 
@@ -238,10 +242,10 @@ def main():
         results = sim.quick_run(preset=args.preset)
     
     # Print summary
-    print("\n" + "="*50)
-    print("SIMULATION SUMMARY")
-    print("="*50)
-    print(f"Dashboard: {results['summary_dashboard']}")
+    logger.info("=" * 50)
+    logger.info("SIMULATION SUMMARY")
+    logger.info("=" * 50)
+    logger.info(f"Dashboard: {results['summary_dashboard']}")
     print(f"Full Report: {results['full_report']}")
     print(f"All Results: {results['output_dir']}/")
     print("\nTo view the dashboard image:")

@@ -1,18 +1,13 @@
-# Environment variables
-.env
-.env.local
-.env.*.local
+# Anything that starts with a dor, except gitignore
+.*
+!.gitignore
+
+# Project specific
+checkpoints/
+results/
 
 # Python
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-venv/
-env/
-ENV/
-.venv
 
 # Distribution / packaging
 .Python
@@ -39,31 +34,4 @@ htmlcov/
 .tox/
 .nox/
 
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
 
-# Project specific
-checkpoints/
-results/
-example_results/
-simulation_output/
-visualizations/
-reports/
-*.png
-*.jpg
-*.jpeg
-*.pdf
-
-# Jupyter
-.ipynb_checkpoints/
-*.ipynb
-
-# Documentation
-docs/_build/
-docs/_static/
-docs/_templates/

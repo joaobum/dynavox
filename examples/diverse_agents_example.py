@@ -33,17 +33,25 @@ def run_diverse_simulation():
     
     print("=== DynaVox Diverse Agents Simulation ===\n")
     
-    # Create simulation with specific model
-    # Using mock mode for demonstration - change to False to use real LLM
-    use_mock = False
+    # Get global settings from command line args
+    use_mock = globals().get('use_mock', True)
+    use_async = globals().get('USE_ASYNC', False)
+    model_choice = globals().get('MODEL_CHOICE', None)
     
     if use_mock:
         print("🔧 Running in MOCK mode (no API calls)")
-        sim = QuickSimulation(use_mock=True)
+        sim = QuickSimulation(use_mock=True, use_async=use_async)
     else:
-        # For real simulation, use a cost-effective model
-        print("💡 Using GPT-4o-mini for cost-effective simulation")
-        sim = QuickSimulation(model='gpt-4o-mini')
+        # For real simulation, use specified model or default
+        if model_choice:
+            print(f"💡 Using {model_choice} model")
+            sim = QuickSimulation(model=model_choice, use_async=use_async)
+        else:
+            print("💡 Using GPT-4o-mini for cost-effective simulation")
+            sim = QuickSimulation(model='gpt-4o-mini', use_async=use_async)
+    
+    if use_async:
+        print("⚡ Async mode enabled - conversations will run in parallel")
     
     # Define diverse topics that different groups might have varying opinions on
     topics = [
@@ -59,7 +67,7 @@ def run_diverse_simulation():
     # Configure for diversity
     # Low homophily bias (0.3) means agents are more likely to interact
     # with those who are different from them
-    homophily_bias = 0.2
+    homophily_bias = 0.15
     
     # Higher interaction probability to ensure diverse encounters
     interaction_probability = 0.25
@@ -67,45 +75,49 @@ def run_diverse_simulation():
     # More interactions per agent per round
     max_interactions_per_agent = 3
     
+    # Configuration based on mode
+    num_rounds = 3 if use_mock else 15
+    num_agents = 20  # Always use 20 agents
+    
     print("🔧 Configuration:")
-    print(f"   • Agents: 20 (diverse backgrounds)")
-    print(f"   • Rounds: 15")
+    print(f"   • Agents: {num_agents} (diverse backgrounds)")
+    print(f"   • Rounds: {num_rounds}")
     print(f"   • Homophily bias: {homophily_bias} (low - encourages cross-group interaction)")
     print(f"   • Interaction probability: {interaction_probability}")
     print(f"   • Max interactions per agent: {max_interactions_per_agent}")
     print()
     
     # For even more control over diversity, you could use SimulationEngine directly:
-    if False:  # Set to True to use advanced configuration
-        llm_client = create_llm_client('mock:test' if use_mock else 'gpt-4o-mini')
-        sim_engine = SimulationEngine(llm_client)
-        
-        # Force specific personality distributions
-        personality_biases = [
-            'high openness',           # 4 agents - creative, curious
-            'high conscientiousness',  # 4 agents - organized, disciplined
-            'high agreeableness',      # 3 agents - cooperative, trusting
-            'high extraversion',       # 3 agents - outgoing, energetic
-            'low agreeableness',       # 3 agents - competitive, skeptical
-            'balanced'                 # 3 agents - moderate traits
-        ]
-        
-        # Create agents with forced diversity
-        for i in range(20):
-            bias = personality_biases[i % len(personality_biases)]
-            sim_engine.initialize_population(
-                size=1,
-                topics=topics,
-                personality_biases=[bias],
-                age_range=(18 + (i * 3), 25 + (i * 3))  # Spread ages
-            )
+    # if False:  # Set to True to use advanced configuration
+    #     llm_client = create_llm_client('mock:test' if use_mock else 'gpt-4o-mini')
+    #     sim_engine = SimulationEngine(llm_client, use_async=use_async)
+    #     
+    #     # Force specific personality distributions
+    #     personality_biases = [
+    #         'high openness',           # 4 agents - creative, curious
+    #         'high conscientiousness',  # 4 agents - organized, disciplined
+    #         'high agreeableness',      # 3 agents - cooperative, trusting
+    #         'high extraversion',       # 3 agents - outgoing, energetic
+    #         'low agreeableness',       # 3 agents - competitive, skeptical
+    #         'balanced'                 # 3 agents - moderate traits
+    #     ]
+    #     
+    #     # Create agents with forced diversity
+    #     for i in range(20):
+    #         bias = personality_biases[i % len(personality_biases)]
+    #         sim_engine.initialize_population(
+    #             size=1,
+    #             topics=topics,
+    #             personality_biases=[bias],
+    #             age_range=(18 + (i * 3), 25 + (i * 3))  # Spread ages
+    #         )
     
     # Run the simulation
     print("🚀 Starting simulation...\n")
     
     results = sim.run(
-        num_agents=20,
-        num_rounds=15,
+        num_agents=num_agents,
+        num_rounds=num_rounds,
         topics=topics,
         interaction_probability=interaction_probability,
         homophily_bias=homophily_bias,
@@ -155,6 +167,33 @@ def analyze_cross_group_interactions(results):
 
 
 if __name__ == "__main__":
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='Run DynaVox diverse agents simulation')
+    parser.add_argument('--async', action='store_true', 
+                       help='Use async execution for parallel conversations')
+    parser.add_argument('--real', action='store_true',
+                       help='Use real LLM instead of mock')
+    parser.add_argument('--model', type=str, default=None,
+                       help='LLM model to use (e.g., gpt-4o-mini, claude-3-5-haiku)')
+    
+    args = parser.parse_args()
+    
+    # Override the default mock setting if --real is specified
+    if args.real:
+        use_mock = False
+    else:
+        use_mock = True
+    
+    # Store model choice globally
+    MODEL_CHOICE = args.model
+    
+    # Modify the run_diverse_simulation function call
+    import inspect
+    
+    # Temporarily store the async flag
+    USE_ASYNC = getattr(args, 'async')
+    
     # Run the diverse agents simulation
     results = run_diverse_simulation()
     

@@ -157,6 +157,22 @@ class AnthropicClient(LLMClient):
         
         self.client = Anthropic(api_key=self.api_key)
         self.model = model
+        
+        # Map common model names to actual API model IDs
+        model_mapping = {
+            "claude-3-5-haiku": "claude-3-haiku-20240307",
+            "claude-3-haiku": "claude-3-haiku-20240307",
+            "claude-3-5-sonnet": "claude-3-5-sonnet-20241022",
+            "claude-3-sonnet": "claude-3-sonnet-20240229",
+            "claude-3-opus": "claude-3-opus-20240229",
+        }
+        
+        # Use mapped model name if available
+        if self.model in model_mapping:
+            actual_model = model_mapping[self.model]
+            print(f"Mapping {self.model} to {actual_model}")
+            self.model = actual_model
+        
         print(f"Initialized Anthropic client with model: {self.model}")
     
     def generate(self, prompt: str, temperature: float = 0.7, 
@@ -165,16 +181,27 @@ class AnthropicClient(LLMClient):
         logger.debug(f"Generating response with model {self.model}, temp={temperature}, max_tokens={max_tokens}")
         logger.debug(f"LLM Prompt:\n{prompt}")
         
-        response = self.client.messages.create(
-            model=self.model,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=temperature,
-            max_tokens=max_tokens
-        )
-        
-        result = response.content[0].text
-        logger.debug(f"LLM Response:\n{result}")
-        return result
+        try:
+            response = self.client.messages.create(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=temperature,
+                max_tokens=max_tokens
+            )
+            
+            result = response.content[0].text
+            logger.debug(f"LLM Response:\n{result}")
+            return result
+        except Exception as e:
+            if "authentication_error" in str(e):
+                raise ValueError(
+                    "Anthropic API authentication failed. Please check:\n"
+                    "1. Your ANTHROPIC_API_KEY in the .env file is valid\n"
+                    "2. The API key has not expired\n"
+                    "3. You have access to the requested model\n"
+                    f"Original error: {e}"
+                )
+            raise
     
     def generate_json(self, prompt: str, temperature: float = 0.7, 
                      max_tokens: int = 1000) -> Dict[str, Any]:
@@ -210,11 +237,14 @@ class MockLLMClient(LLMClient):
     
     def __init__(self):
         self.call_count = 0
+        self.delay = 0.01  # Minimal delay for faster mock testing
         logger.info("Initialized MockLLMClient for testing")
     
     def generate(self, prompt: str, temperature: float = 0.7, 
                 max_tokens: int = 1000) -> str:
         """Generate mock response."""
+        import time
+        time.sleep(self.delay)  # Simulate API latency
         self.call_count += 1
         logger.debug(f"Mock LLM Prompt:\n{prompt}")
         
@@ -255,6 +285,8 @@ class MockLLMClient(LLMClient):
     def generate_json(self, prompt: str, temperature: float = 0.7, 
                      max_tokens: int = 1000) -> Dict[str, Any]:
         """Generate mock JSON response."""
+        import time
+        time.sleep(self.delay)  # Simulate API latency
         self.call_count += 1
         
         # Return different mock data based on prompt content

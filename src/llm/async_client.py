@@ -140,11 +140,11 @@ class AsyncLLMWrapper:
 class AsyncMockLLMClient(AsyncLLMClient):
     """Mock async LLM client for testing."""
     
-    def __init__(self, delay: float = 0.1):
+    def __init__(self, delay: float = 0.01):
         """Initialize mock client with optional delay.
         
         Args:
-            delay: Simulated API call delay in seconds
+            delay: Simulated API call delay in seconds (default 0.01s for fast testing)
         """
         self.call_count = 0
         self.delay = delay

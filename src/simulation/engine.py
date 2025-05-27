@@ -36,20 +36,23 @@ class SimulationEngine:
             from ..interactions.async_orchestrator import AsyncConversationOrchestrator
             self.async_orchestrator = AsyncConversationOrchestrator(llm_client)
             logger.info("Async conversation mode enabled for parallel interactions")
-            print("Async conversation mode enabled for parallel interactions")
+            logger.debug("Async conversation mode enabled for parallel interactions")
         
         self.analyzer = SimulationAnalyzer()
         
         # Log the model being used if available
         if hasattr(llm_client, 'model'):
             logger.info(f"Simulation engine initialized with model: {llm_client.model}")
-            print(f"Simulation engine initialized with model: {llm_client.model}")
+            logger.debug(f"Simulation engine initialized with model: {llm_client.model}")
         
         # Simulation state
         self.agents: Dict[str, Agent] = {}
         self.conversations: List[Conversation] = []
         self.metrics_history: List[PopulationMetrics] = []
         self.round_number = 0
+        
+        # Real-time data writer (will be set by QuickSimulation)
+        self.data_writer = None
         
         # Set random seed if provided
         if seed is not None:
@@ -68,7 +71,7 @@ class SimulationEngine:
             personality_distribution: Optional personality trait distributions
         """
         logger.info(f"Initializing population of {size} agents with topics: {topics}")
-        print(f"Initializing population of {size} agents...")
+        logger.debug(f"Initializing population of {size} agents...")
         
         for i in range(size):
             # Build constraints for this agent
@@ -117,23 +120,26 @@ class SimulationEngine:
                 logger.debug(f"Generating agent {i+1} with constraints: {constraints}")
                 agent = self.generator.generate_agent(constraints)
                 self.agents[agent.id] = agent
-                logger.info(f"Created agent {agent.id}: {agent.name} ({agent.background.age}, {agent.background.occupation})")
-                print(f"Created agent {i+1}/{size}: {agent.name} "
-                     f"({agent.background.age}, {agent.background.occupation})")
+                logger.info(f"👤 Created agent {agent.id}: {agent.name} ({agent.background.age}, {agent.background.occupation})")
+                # Agent creation already logged above
+                
+                # Update real-time data if writer is available
+                if self.data_writer:
+                    self.data_writer.update_agent(agent)
             except Exception as e:
                 logger.error(f"Failed to create agent {i+1}: {e}")
-                print(f"Failed to create agent {i+1}: {e}")
+                # Error already logged above
                 # Try again with fewer constraints
                 try:
                     logger.debug("Retrying with default constraints")
                     agent = self.generator.generate_agent({'topics': topics})
                     self.agents[agent.id] = agent
                     logger.info(f"Created agent {agent.id} with default constraints")
-                    print(f"Created agent {i+1}/{size} with default constraints")
+                    # Agent creation already logged above
                 except:
-                    print(f"Skipping agent {i+1} due to repeated failures")
+                    logger.warning(f"Skipping agent {i+1} due to repeated failures")
         
-        print(f"Successfully created {len(self.agents)} agents")
+        logger.info(f"✅ Successfully created {len(self.agents)} agents")
         
         # Calculate initial metrics
         initial_metrics = self.analyzer.calculate_population_metrics(
@@ -156,8 +162,8 @@ class SimulationEngine:
             max_interactions_per_agent: Maximum interactions per agent per round
         """
         self.round_number += 1
-        logger.info(f"Starting interaction round {self.round_number}")
-        print(f"\n--- Round {self.round_number} ---")
+        logger.info(f"🔁 Starting interaction round {self.round_number}")
+        # Round already logged above
         
         agent_list = list(self.agents.values())
         n_agents = len(agent_list)
@@ -188,8 +194,8 @@ class SimulationEngine:
             agent2 = remaining_agents.pop(random.randint(0, len(remaining_agents) - 1))
             potential_pairs.append((agent1, agent2))
         
-        logger.debug(f"Formed {len(potential_pairs)} potential conversation pairs")
-        print(f"Formed {len(potential_pairs)} potential conversation pairs")
+        logger.debug(f"🤝 Formed {len(potential_pairs)} potential conversation pairs")
+        logger.info(f"🤝 Formed {len(potential_pairs)} potential conversation pairs")
         
         # Evaluate each pair for actual interaction
         interaction_pairs = []
@@ -209,16 +215,16 @@ class SimulationEngine:
             # Decision to interact
             if random.random() < adjusted_prob:
                 interaction_pairs.append((agent1, agent2))
-                logger.debug(f"{agent1.name} and {agent2.name} will interact (prob: {adjusted_prob:.2f})")
-                print(f"  {agent1.name} and {agent2.name} will interact (prob: {adjusted_prob:.2f})")
+                logger.debug(f"✅ {agent1.name} and {agent2.name} will interact (prob: {adjusted_prob:.2f})")
+                logger.debug(f"  ✅ {agent1.name} and {agent2.name} will interact (prob: {adjusted_prob:.2f})")
             else:
-                logger.debug(f"{agent1.name} and {agent2.name} decided not to interact (prob: {adjusted_prob:.2f})")
-                print(f"  {agent1.name} and {agent2.name} decided not to interact (prob: {adjusted_prob:.2f})")
+                logger.debug(f"❌ {agent1.name} and {agent2.name} decided not to interact (prob: {adjusted_prob:.2f})")
+                logger.debug(f"  ❌ {agent1.name} and {agent2.name} decided not to interact (prob: {adjusted_prob:.2f})")
         
         # Execute conversations
         if self.use_async and self.async_orchestrator and interaction_pairs:
             logger.info(f"Executing {len(interaction_pairs)} conversations in parallel")
-            print(f"\nExecuting {len(interaction_pairs)} conversations in parallel...")
+            # Parallel execution already logged below
             # Async parallel execution
             import asyncio
             
@@ -237,26 +243,40 @@ class SimulationEngine:
                 # Add to conversation history
                 self.conversations.extend(new_conversations)
                 logger.info(f"Completed {len(new_conversations)} parallel conversations")
-                print(f"\nCompleted {len(new_conversations)} parallel conversations")
+                # Completion already logged above
+                
+                # Print all conversation summaries after parallel completion
+                logger.info("📋 Conversation Summaries:")
+                for i, conv in enumerate(new_conversations):
+                    agent1 = self.agents[conv.participants[0]]
+                    agent2 = self.agents[conv.participants[1]]
+                    self.orchestrator._print_conversation_summary(agent1, agent2, conv)
                 
             except Exception as e:
                 logger.error(f"Error in parallel conversation execution: {e}")
-                print(f"Async conversation execution failed: {e}")
-                print("Falling back to synchronous execution...")
+                logger.error(f"Async conversation execution failed: {e}")
+                logger.warning("Falling back to synchronous execution...")
                 self.use_async = False
         
         if not self.use_async and interaction_pairs:
             # Synchronous execution
             logger.info(f"Executing {len(interaction_pairs)} conversations sequentially")
-            print(f"\nExecuting {len(interaction_pairs)} conversations sequentially...")
+            # Sequential execution already logged below
             for agent1, agent2 in interaction_pairs:
                 try:
                     logger.debug(f"Starting conversation between {agent1.name} and {agent2.name}")
-                    print(f"  {agent1.name} is talking with {agent2.name}...")
+                    logger.debug(f"  {agent1.name} is talking with {agent2.name}...")
                     
                     conversation = self.orchestrator.conduct_conversation(agent1, agent2)
                     self.conversations.append(conversation)
-                    logger.info(f"Conversation completed between {agent1.id} and {agent2.id}")
+                    logger.info(f"💬 Conversation completed between {agent1.id} and {agent2.id}")
+                    
+                    # Update real-time data if writer is available
+                    if self.data_writer:
+                        self.data_writer.add_conversation(conversation)
+                        # Update both agents after conversation
+                        self.data_writer.update_agent(agent1)
+                        self.data_writer.update_agent(agent2)
                     
                     # Print summary is now done inside conduct_conversation
                     
@@ -270,6 +290,10 @@ class SimulationEngine:
         round_metrics = self.analyzer.calculate_population_metrics(
             self.agents, self.conversations, self.round_number)
         self.metrics_history.append(round_metrics)
+        
+        # Update real-time metrics if writer is available
+        if self.data_writer:
+            self.data_writer.update_metrics(round_metrics)
         
         # Print summary metrics
         self._print_round_summary(round_metrics)
